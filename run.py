@@ -61,3 +61,4 @@ if __name__ == "__main__":
 
     print(f"======= Training {config['model_params']['name']} =======")
     runner.fit(experiment, datamodule=data)
+    
