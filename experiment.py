@@ -10,7 +10,7 @@ from torchvision import transforms
 import torchvision.utils as vutils
 from torchvision.datasets import CelebA
 from torch.utils.data import DataLoader
-
+import matplotlib.pyplot as plt
 
 class VAEXperiment(pl.LightningModule):
 
@@ -59,8 +59,19 @@ class VAEXperiment(pl.LightningModule):
 
         
     def on_validation_end(self) -> None:
+        self.save_model()
         self.sample_images()
-        
+    
+    def save_model(self):
+        path = os.path.join(self.logger.log_dir , "Model", "state_dict_model.pt") 
+        torch.save(self.model.state_dict(), path)
+    
+    def sample_image(self):
+        sample = self.model.sample(1, self.curr_device)
+        print(sample.detach().cpu().numpy().shape)
+        plt.imshow(sample.detach().cpu().numpy().reshape(28,28))
+        plt.show()
+
     def sample_images(self):
         # Get sample reconstruction image            
         test_input, test_label = next(iter(self.trainer.datamodule.test_dataloader()))
