@@ -1,7 +1,11 @@
+model:
+  load: False
+  path: "logs/BetaTCVAE/version_0/Model"
+
 model_params:
   name: 'BetaTCVAE'
-  in_channels: 3
-  latent_dim: 10
+  in_channels: 1
+  latent_dim: 32
   anneal_steps: 10000
   alpha: 1.
   beta:  6.
@@ -11,7 +15,7 @@ data_params:
   data_path: "Data/"
   train_batch_size: 64
   val_batch_size:  64
-  patch_size: 64
+  patch_size: 28
   num_workers: 4
 
 
@@ -23,8 +27,9 @@ exp_params:
   manual_seed: 1265
 
 trainer_params:
-  gpus: [1]
-  max_epochs: 10
+  accelerator: 'gpu'
+  devices: [0]
+  max_epochs: 15
 
 logging_params:
   save_dir: "logs/"
