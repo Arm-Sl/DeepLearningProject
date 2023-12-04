@@ -34,7 +34,9 @@ if __name__ == "__main__":
         model.load_state_dict(torch.load(os.path.join(config["model"]["path"], "state_dict_model.pt")))
         model.eval()
         experiment = VAEXperiment(model,config['exp_params'])
-        experiment.sample_image()
+        data = VAEDataset(**config["data_params"])
+        data.setup()
+        experiment.visualize_latent_space(data.test_dataloader())
     else:
         tb_logger =  TensorBoardLogger(save_dir=config['logging_params']['save_dir'],
                                     name=config['model_params']['name'],)

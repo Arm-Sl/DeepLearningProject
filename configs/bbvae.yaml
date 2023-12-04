@@ -1,11 +1,11 @@
 model:
-  load: False
-  path: "logs/BetaVAE/version_1/Model"
+  load: true
+  path: "logs/BetaVAE/version_3/Model"
 
 model_params:
   name: 'BetaVAE'
   in_channels: 1
-  latent_dim: 128
+  latent_dim: 32
   loss_type: 'B'
   gamma: 10.0
   max_capacity: 25
@@ -27,7 +27,7 @@ exp_params:
 
 trainer_params:
   gpus: [0]
-  max_epochs: 30
+  max_epochs: 15
 
 logging_params:
   save_dir: "logs/"

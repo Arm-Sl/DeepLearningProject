@@ -1,6 +1,7 @@
 import os
 import math
 import torch
+import numpy as np
 from torch import optim
 from models import BaseVAE
 from models.types_ import *
@@ -11,6 +12,7 @@ import torchvision.utils as vutils
 from torchvision.datasets import CelebA
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
+from sklearn.manifold import TSNE
 
 class VAEXperiment(pl.LightningModule):
 
@@ -68,8 +70,30 @@ class VAEXperiment(pl.LightningModule):
     
     def sample_image(self):
         sample = self.model.sample(1, self.curr_device)
-        print(sample.detach().cpu().numpy().shape)
         plt.imshow(sample.detach().cpu().numpy().reshape(28,28))
+        plt.show()
+
+    def visualize_latent_space(self, valid_loader):
+        points = []
+        label_idcs = []
+    
+        for i, data in enumerate(valid_loader):
+            img, label = [d.to(self.curr_device) for d in data]
+            proj = self.model.encode(img)
+            points.extend(proj[0].detach().cpu().numpy())
+            label_idcs.extend(label.detach().cpu().numpy())
+            del img, label
+        points = np.array(points)
+        
+        point_embedded = TSNE(n_components=2, learning_rate='auto', init='random').fit_transform(points)
+        # Creating a scatter plot
+        fig, ax = plt.subplots(figsize=(10, 10))
+        scatter = ax.scatter(x=point_embedded[:, 0], y=point_embedded[:, 1], s=2.0, c=label_idcs, cmap='tab10', alpha=0.9, zorder=2)
+        classes = np.unique(label_idcs)
+        legend_labels = [f'{cls}' for cls in classes]
+        legend = ax.legend(handles=scatter.legend_elements()[0], labels=legend_labels, title='Classes', loc='upper left')
+        ax.add_artist(legend)
+        ax.grid(True, color="lightgray", alpha=1.0, zorder=0)
         plt.show()
 
     def sample_images(self):
