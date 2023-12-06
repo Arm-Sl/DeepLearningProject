@@ -13,7 +13,7 @@ class BetaVAE(BaseVAE):
                  in_channels: int,
                  latent_dim: int,
                  hidden_dims: List = None,
-                 beta: int = 4,
+                 beta: int = 6,
                  gamma:float = 1000.,
                  max_capacity: int = 25,
                  Capacity_max_iter: int = 1e5,
@@ -30,28 +30,29 @@ class BetaVAE(BaseVAE):
 
         modules = []
         if hidden_dims is None:
-            hidden_dims = [32, 64, 128, 256, 512]
+            hidden_dims = [32, 32, 64, 64]
 
         # Build Encoder
         for h_dim in hidden_dims:
             modules.append(
                 nn.Sequential(
                     nn.Conv2d(in_channels, out_channels=h_dim,
-                              kernel_size= 3, stride= 2, padding  = 1),
+                              kernel_size= 4, stride= 2, padding  = 1),
                     nn.BatchNorm2d(h_dim),
                     nn.LeakyReLU())
             )
             in_channels = h_dim
 
         self.encoder = nn.Sequential(*modules)
-        self.fc_mu = nn.Linear(hidden_dims[-1], latent_dim)
-        self.fc_var = nn.Linear(hidden_dims[-1], latent_dim)
+        self.fc = nn.Linear(hidden_dims[-1], 256)
+        self.fc_mu = nn.Linear(256, latent_dim)
+        self.fc_var = nn.Linear(256, latent_dim)
 
 
         # Build Decoder
         modules = []
-
-        self.decoder_input = nn.Linear(latent_dim, hidden_dims[-1])
+        self.fc_decoder = nn.Linear(latent_dim, 256)
+        self.decoder_input = nn.Linear(256, hidden_dims[-1])
 
         hidden_dims.reverse()
 
@@ -60,7 +61,7 @@ class BetaVAE(BaseVAE):
                 nn.Sequential(
                     nn.ConvTranspose2d(hidden_dims[i],
                                        hidden_dims[i + 1],
-                                       kernel_size=3,
+                                       kernel_size=4,
                                        stride = 2,
                                        padding=1,
                                        output_padding=1),
@@ -74,17 +75,13 @@ class BetaVAE(BaseVAE):
 
         self.final_layer = nn.Sequential(
                             nn.ConvTranspose2d(hidden_dims[-1],
-                                               hidden_dims[-1],
-                                               kernel_size=3,
+                                               1,
+                                               kernel_size=4,
                                                stride=2,
-                                               padding=3,
-                                               output_padding=1),
-                            nn.BatchNorm2d(hidden_dims[-1]),
-                            nn.LeakyReLU(),
-                            nn.Conv2d(hidden_dims[-1], out_channels= 1,
-                                      kernel_size= 3, padding= 1),
+                                               padding=2,
+                                               output_padding=0),
                             nn.Sigmoid())
-
+        
     def encode(self, input: Tensor) -> List[Tensor]:
         """
         Encodes the input by passing through the encoder network
@@ -94,6 +91,7 @@ class BetaVAE(BaseVAE):
         """
         result = self.encoder(input)
         result = torch.flatten(result, start_dim=1)
+        result = self.fc(result)
         # Split the result into mu and var components
         # of the latent Gaussian distribution
         mu = self.fc_mu(result)
@@ -102,8 +100,9 @@ class BetaVAE(BaseVAE):
         return [mu, log_var]
 
     def decode(self, z: Tensor) -> Tensor:
-        result = self.decoder_input(z)
-        result = result.view(-1, 512, 1, 1)
+        result = self.fc_decoder(z)
+        result = self.decoder_input(result)
+        result = result.view(-1, 64, 1, 1)
         result = self.decoder(result)
         result = self.final_layer(result)
         return result

@@ -65,7 +65,46 @@ class VAEXperiment(pl.LightningModule):
     
     def sample_image(self):
         sample = self.model.sample(1, self.curr_device)
-        plt.imshow(sample.detach().cpu().numpy().reshape(28,28))
+        print(sample.shape)
+        plt.imshow(sample.detach().cpu().numpy().reshape(64,64), cmap='gray')
+        plt.show()
+
+    def visualize_effect(self, latent_dim, num_samples=50):
+        # Générer un échantillon aléatoire dans l'espace latent
+        latent_sample = torch.randn(1, latent_dim).to(self.curr_device)
+        #latent_sample = torch.zeros(1,latent_dim).to(self.curr_device)
+       
+        # Générer des échantillons en modifiant sélectivement chaque dimension de l'espace latent
+        plt.figure(figsize=(15, 2))
+        for i in range(latent_dim):
+            latent_copy = latent_sample.clone()
+            values = torch.linspace(-3, 3, num_samples)
+            for j in range(num_samples):
+                latent_copy[0, i] = values[j]
+                generated_sample = self.model.decode(latent_copy)
+                plt.subplot(5, 10, j + 1)
+                plt.imshow(generated_sample.detach().cpu().numpy().reshape(28,28), cmap='gray')
+                plt.axis('off')
+            plt.suptitle(f"Variation de la dimension {i + 1}")
+            plt.show()
+
+    def interpolate(self, latent_dim):
+        point1 = torch.randn(latent_dim).to(self.curr_device)
+        point2 = torch.randn(latent_dim).to(self.curr_device)
+        # Interpoler linéairement entre les deux points
+        interpolation_values = torch.linspace(0, 1, 20).to(self.curr_device)
+        interpolation_values = interpolation_values.view(-1, 1)
+
+        # Effectuer l'interpolation dans l'espace latent
+        interpolated_points = point1 + interpolation_values * (point2 - point1)
+        fig = plt.figure(figsize=(8, 8))
+        col = 5
+        row = 4
+        # Utiliser le décodeur pour générer des exemples interpolés
+        for i in range(1, col*row +1 ):
+            interpolated_sample = self.model.decode(interpolated_points[i-1])
+            fig.add_subplot(row, col, i)
+            plt.imshow(interpolated_sample.detach().cpu().numpy().reshape(28,28), cmap='gray')
         plt.show()
 
     def visualize_latent_space(self, valid_loader):

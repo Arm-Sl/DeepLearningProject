@@ -34,7 +34,10 @@ if __name__ == "__main__":
         experiment = VAEXperiment(model,config['exp_params'])
         data = VAEDataset(**config["data_params"])
         data.setup()
-        experiment.visualize_latent_space(data.test_dataloader())
+        #experiment.sample_image()
+        #experiment.visualize_latent_space(data.test_dataloader())
+        #experiment.interpolate(config["model_params"]["latent_dim"])
+        experiment.visualize_effect(config["model_params"]["latent_dim"])
     else:
         tb_logger =  TensorBoardLogger(save_dir=config['logging_params']['save_dir'],
                                     name=config['model_params']['name'],)

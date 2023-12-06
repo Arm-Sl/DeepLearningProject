@@ -29,7 +29,7 @@ class BetaTCVAE(BaseVAE):
 
         modules = []
         if hidden_dims is None:
-            hidden_dims = [32, 32, 32, 32]
+            hidden_dims = [32, 32, 64, 64]
 
         # Build Encoder
         for h_dim in hidden_dims:
@@ -43,15 +43,15 @@ class BetaTCVAE(BaseVAE):
 
         self.encoder = nn.Sequential(*modules)
 
-        self.fc = nn.Linear(hidden_dims[-1]*16, 256)
+        self.fc = nn.Linear(hidden_dims[-1], 256)
         self.fc_mu = nn.Linear(256, latent_dim)
         self.fc_var = nn.Linear(256, latent_dim)
 
 
         # Build Decoder
         modules = []
-
-        self.decoder_input = nn.Linear(latent_dim, 256 *  2)
+        self.fc_decoder = nn.Linear(latent_dim, 256)
+        self.decoder_input = nn.Linear(latent_dim, hidden_dims[-1])
 
         hidden_dims.reverse()
 
@@ -60,7 +60,7 @@ class BetaTCVAE(BaseVAE):
                 nn.Sequential(
                     nn.ConvTranspose2d(hidden_dims[i],
                                        hidden_dims[i + 1],
-                                       kernel_size=3,
+                                       kernel_size=4,
                                        stride = 2,
                                        padding=1,
                                        output_padding=1),
@@ -71,15 +71,12 @@ class BetaTCVAE(BaseVAE):
 
         self.final_layer = nn.Sequential(
                             nn.ConvTranspose2d(hidden_dims[-1],
-                                               hidden_dims[-1],
-                                               kernel_size=3,
+                                               1,
+                                               kernel_size=4,
                                                stride=2,
-                                               padding=1,
-                                               output_padding=1),
-                            nn.LeakyReLU(),
-                            nn.Conv2d(hidden_dims[-1], out_channels= 3,
-                                      kernel_size= 3, padding= 1),
-                            nn.Tanh())
+                                               padding=2,
+                                               output_padding=0),       
+                            nn.Sigmoid())
 
     def encode(self, input: Tensor) -> List[Tensor]:
         """
@@ -89,7 +86,6 @@ class BetaTCVAE(BaseVAE):
         :return: (Tensor) List of latent codes
         """
         result = self.encoder(input)
-
         result = torch.flatten(result, start_dim=1)
         result = self.fc(result)
         # Split the result into mu and var components
@@ -106,8 +102,9 @@ class BetaTCVAE(BaseVAE):
         :param z: (Tensor) [B x D]
         :return: (Tensor) [B x C x H x W]
         """
+        result = self.fc_decoder(z)
         result = self.decoder_input(z)
-        result = result.view(-1, 32, 4, 4)
+        result = result.view(-1, 64, 1, 1)
         result = self.decoder(result)
         result = self.final_layer(result)
         return result
