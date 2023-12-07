@@ -12,56 +12,6 @@ import zipfile
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Add your custom dataset class here
-class MyDataset(Dataset):
-    def __init__(self):
-        pass
-    
-    
-    def __len__(self):
-        pass
-    
-    def __getitem__(self, idx):
-        pass
-
-
-class MyCelebA(CelebA):
-    """
-    A work-around to address issues with pytorch's celebA dataset class.
-    
-    Download and Extract
-    URL : https://drive.google.com/file/d/1m8-EBPgi5MRubrm6iQjafK2QMHDBMSfJ/view?usp=sharing
-    """
-    
-    def _check_integrity(self) -> bool:
-        return True
-     
-
-class OxfordPets(Dataset):
-    """
-    URL = https://www.robots.ox.ac.uk/~vgg/data/pets/
-    """
-    def __init__(self, 
-                 data_path: str, 
-                 split: str,
-                 transform: Callable,
-                **kwargs):
-        self.data_dir = Path(data_path) / "OxfordPets"        
-        self.transforms = transform
-        imgs = sorted([f for f in self.data_dir.iterdir() if f.suffix == '.jpg'])
-        
-        self.imgs = imgs[:int(len(imgs) * 0.75)] if split == "train" else imgs[int(len(imgs) * 0.75):]
-
-    def __len__(self):
-        return len(self.imgs)
-    
-    def __getitem__(self, idx):
-        img = default_loader(self.imgs[idx])
-        
-        if self.transforms is not None:
-            img = self.transforms(img)
-        
-        return img, 0.0 # dummy datat to prevent breaking 
 
 class VAEDataset(LightningDataModule):
     """

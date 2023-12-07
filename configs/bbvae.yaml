@@ -1,6 +1,6 @@
 model:
-  load: true
-  path: "logs/BetaVAE/version_3/Model"
+  load: false
+  path: "logs/BetaVAE/version_4/Model"
 
 model_params:
   name: 'BetaVAE'
@@ -10,6 +10,7 @@ model_params:
   kernel_size: 3
   loss_type: 'B'
   gamma: 10.0
+  beta: 4
   max_capacity: 25
   Capacity_max_iter: 10000
 

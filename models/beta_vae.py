@@ -32,7 +32,7 @@ class BetaVAE(BaseVAE):
 
         modules = []
         if hidden_dims is None:
-            hidden_dims = [32, 64, 128, 256, 512]
+            hidden_dims = [32, 32, 64, 64]
 
         # Build Encoder
         for h_dim in hidden_dims:
@@ -53,10 +53,8 @@ class BetaVAE(BaseVAE):
 
         # Build Decoder
         modules = []
-
         self.decoder_fc = nn.Linear(256, hidden_dims[-1] * 4)
         self.decoder_input = nn.Linear(latent_dim, 256)
-
         hidden_dims.reverse()
 
         for i in range(len(hidden_dims) - 1):
@@ -88,7 +86,7 @@ class BetaVAE(BaseVAE):
                             nn.Conv2d(hidden_dims[-1], out_channels= self.in_channels,
                                       kernel_size= kernel_size, padding= 1),
                             nn.Sigmoid())
-
+        
     def encode(self, input: Tensor) -> List[Tensor]:
         """
         Encodes the input by passing through the encoder network
