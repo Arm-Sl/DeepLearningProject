@@ -101,15 +101,19 @@ class VAEDataset(LightningDataModule):
 #       ========================ROT MNIST=======================================
         train_transforms_rot = transforms.Compose([
                                                 transforms.RandomRotation(degrees=90),
+                                                transforms.Resize(self.patch_size),
                                                 transforms.ToTensor()])
         
         val_transforms_rot = transforms.Compose([
                                                 transforms.RandomRotation(degrees=90),
+                                                transforms.Resize(self.patch_size),
                                                 transforms.ToTensor()])
         train_transforms = transforms.Compose([
+                                                transforms.Resize(self.patch_size),
                                                 transforms.ToTensor()])
         
         val_transforms = transforms.Compose([
+                                            transforms.Resize(self.patch_size),
                                             transforms.ToTensor()])
         
         self.train_dataset = MNIST(

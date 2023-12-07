@@ -7,6 +7,7 @@ from models.types_ import *
 import pytorch_lightning as pl
 import torchvision.utils as vutils
 import matplotlib.pyplot as plt
+import torch.utils.data as data_utils
 from sklearn.manifold import TSNE
 
 class VAEXperiment(pl.LightningModule):
@@ -65,8 +66,45 @@ class VAEXperiment(pl.LightningModule):
     
     def sample_image(self):
         sample = self.model.sample(1, self.curr_device)
-        plt.imshow(sample.detach().cpu().numpy().reshape(28,28))
+        plt.imshow(sample.detach().cpu().numpy().reshape(64,64))
         plt.show()
+        
+    def visualize_effect(self, latent_dim, num_samples=50):
+        # Générer un échantillon aléatoire dans l'espace latent
+        latent_sample = torch.randn(1, latent_dim).to(self.curr_device)
+        #latent_sample = torch.zeros(1,latent_dim).to(self.curr_device)
+       
+        # Générer des échantillons en modifiant sélectivement chaque dimension de l'espace latent
+        plt.figure(figsize=(15, 2))
+        for i in range(latent_dim):
+            latent_copy = latent_sample.clone()
+            values = torch.linspace(-3, 3, num_samples)
+            for j in range(num_samples):
+                latent_copy[0, i] = values[j]
+                generated_sample = self.model.decode(latent_copy)
+                plt.subplot(5, 10, j + 1)
+                plt.imshow(generated_sample.detach().cpu().numpy().reshape(64,64), cmap='gray')
+                plt.axis('off')
+            plt.suptitle(f"Variation de la dimension {i + 1}")
+            plt.show()
+    
+    def visualize_each_dim(self, data, latent_dim):
+        encoded_data = []
+        for img in data:
+            encoded_data.append(self.model.encode(torch.reshape(img,(1,1,64,64)))[0])
+        plt.figure(figsize=(15, 2))
+        for i in range(latent_dim):
+            for k,img in enumerate(encoded_data):
+                latent_copy = img.clone()
+                values = torch.linspace(-2, 2, 20)
+                for j in range(20):
+                    latent_copy[0, i] = values[j]
+                    generated_sample = self.model.decode(latent_copy)
+                    plt.subplot(10, 20, (k*20)+j + 1)
+                    plt.imshow(generated_sample.detach().cpu().numpy().reshape(64,64), cmap='gray')
+                    plt.axis('off')
+            plt.suptitle(f"Variation de la dimension {i + 1}")
+            plt.show()
 
     def visualize_latent_space(self, valid_loader):
         points = []

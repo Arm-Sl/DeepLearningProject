@@ -6,6 +6,8 @@ model_params:
   name: 'BetaVAE'
   in_channels: 1
   latent_dim: 32
+  hidden_dims: [32, 32, 64, 64, 128]
+  kernel_size: 3
   loss_type: 'B'
   gamma: 10.0
   max_capacity: 25
@@ -15,7 +17,7 @@ data_params:
   data_path: "Data/"
   train_batch_size: 64
   val_batch_size:  64
-  patch_size: 28
+  patch_size: 64
   num_workers: 4
   
 exp_params:
@@ -28,7 +30,7 @@ exp_params:
 trainer_params:
   accelerator: 'gpu'
   devices: [0]
-  max_epochs: 15
+  max_epochs: 10
 
 logging_params:
   save_dir: "logs/"
