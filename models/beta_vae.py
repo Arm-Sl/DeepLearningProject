@@ -46,15 +46,15 @@ class BetaVAE(BaseVAE):
             in_channels = h_dim
 
         self.encoder = nn.Sequential(*modules)
-        self.fc = nn.Linear(hidden_dims[-1] * 4, 256)
-        self.fc_mu = nn.Linear(256, latent_dim)
-        self.fc_var = nn.Linear(256, latent_dim)
+        self.fc = nn.Linear(hidden_dims[-1], 128)
+        self.fc_mu = nn.Linear(128, latent_dim)
+        self.fc_var = nn.Linear(128, latent_dim)
 
 
         # Build Decoder
         modules = []
-        self.decoder_fc = nn.Linear(256, hidden_dims[-1] * 4)
-        self.decoder_input = nn.Linear(latent_dim, 256)
+        self.decoder_fc = nn.Linear(128, hidden_dims[-1])
+        self.decoder_input = nn.Linear(latent_dim, 128)
         hidden_dims.reverse()
 
         for i in range(len(hidden_dims) - 1):
@@ -84,9 +84,9 @@ class BetaVAE(BaseVAE):
                             nn.BatchNorm2d(hidden_dims[-1]),
                             nn.LeakyReLU(),
                             nn.Conv2d(hidden_dims[-1], out_channels= self.in_channels,
-                                      kernel_size= kernel_size, padding= 1),
+                                      kernel_size= kernel_size, padding= 1, stride= 2),
                             nn.Sigmoid())
-        
+
     def encode(self, input: Tensor) -> List[Tensor]:
         """
         Encodes the input by passing through the encoder network
@@ -95,9 +95,12 @@ class BetaVAE(BaseVAE):
         :return: (Tensor) List of latent codes
         """
         result = self.encoder(input)
+        #print(result.shape)
         self.shape = result.shape
         result = torch.flatten(result, start_dim=1)
+        #print(result.shape)
         result = self.fc(result)
+        #print(result.shape)
         # Split the result into mu and var components
         # of the latent Gaussian distribution
         mu = self.fc_mu(result)
@@ -107,10 +110,15 @@ class BetaVAE(BaseVAE):
 
     def decode(self, z: Tensor) -> Tensor:
         result = self.decoder_input(z)
+        #print(result.shape)
         result = self.decoder_fc(result)
-        result = result.view(-1, 128, 2, 2)
+        #print(result.shape)
+        result = result.view(-1, 256, 1, 1)
+        #print(result.shape)
         result = self.decoder(result)
+        #print(result.shape)
         result = self.final_layer(result)
+        #print(result.shape)
         return result
 
     def reparameterize(self, mu: Tensor, logvar: Tensor) -> Tensor:
