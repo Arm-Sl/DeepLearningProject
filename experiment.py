@@ -9,6 +9,7 @@ import torchvision.utils as vutils
 import matplotlib.pyplot as plt
 import torch.utils.data as data_utils
 from sklearn.manifold import TSNE
+from random import randint
 
 class VAEXperiment(pl.LightningModule):
 
@@ -49,7 +50,7 @@ class VAEXperiment(pl.LightningModule):
 
         results = self.forward(real_img, labels = labels)
         val_loss = self.model.loss_function(*results,
-                                            M_N = 1.0, #real_img.shape[0]/ self.num_val_imgs,
+                                            M_N = self.params['kld_weight'], #real_img.shape[0]/ self.num_val_imgs,
                                             optimizer_idx = optimizer_idx,
                                             batch_idx = batch_idx)
 
@@ -69,24 +70,21 @@ class VAEXperiment(pl.LightningModule):
         plt.imshow(sample.detach().cpu().numpy().reshape(64,64), cmap='gray')
         plt.show()
 
-    def visualize_effect(self, latent_dim, num_samples=50):
+    def visualize_effect(self, latent_dim, num_samples=20):
         # Générer un échantillon aléatoire dans l'espace latent
         latent_sample = torch.randn(1, latent_dim).to(self.curr_device)
-        #latent_sample = torch.zeros(1,latent_dim).to(self.curr_device)
-       
+
         # Générer des échantillons en modifiant sélectivement chaque dimension de l'espace latent
-        plt.figure(figsize=(15, 2))
         for i in range(latent_dim):
             latent_copy = latent_sample.clone()
-            values = torch.linspace(-3, 3, num_samples)
+            values = torch.linspace(-2,2, num_samples)
             for j in range(num_samples):
                 latent_copy[0, i] = values[j]
                 generated_sample = self.model.decode(latent_copy)
-                plt.subplot(5, 10, j + 1)
-                plt.imshow(generated_sample.detach().cpu().numpy().reshape(28,28), cmap='gray')
+                plt.subplot(10, num_samples, (i*num_samples) + j + 1)
+                plt.imshow(generated_sample.detach().cpu().numpy().reshape(64,64), cmap='gray')
                 plt.axis('off')
-            plt.suptitle(f"Variation de la dimension {i + 1}")
-            plt.show()
+        plt.show()
 
     def interpolate(self, latent_dim):
         point1 = torch.randn(latent_dim).to(self.curr_device)
@@ -106,25 +104,6 @@ class VAEXperiment(pl.LightningModule):
             fig.add_subplot(row, col, i)
             plt.imshow(interpolated_sample.detach().cpu().numpy().reshape(28,28), cmap='gray')
         plt.show()
-        
-    def visualize_effect(self, latent_dim, num_samples=50):
-        # Générer un échantillon aléatoire dans l'espace latent
-        latent_sample = torch.randn(1, latent_dim).to(self.curr_device)
-        #latent_sample = torch.zeros(1,latent_dim).to(self.curr_device)
-       
-        # Générer des échantillons en modifiant sélectivement chaque dimension de l'espace latent
-        plt.figure(figsize=(15, 2))
-        for i in range(latent_dim):
-            latent_copy = latent_sample.clone()
-            values = torch.linspace(-3, 3, num_samples)
-            for j in range(num_samples):
-                latent_copy[0, i] = values[j]
-                generated_sample = self.model.decode(latent_copy)
-                plt.subplot(5, 10, j + 1)
-                plt.imshow(generated_sample.detach().cpu().numpy().reshape(64,64), cmap='gray')
-                plt.axis('off')
-            plt.suptitle(f"Variation de la dimension {i + 1}")
-            plt.show()
     
     def visualize_each_dim(self, data, latent_dim):
         encoded_data = []
@@ -144,6 +123,36 @@ class VAEXperiment(pl.LightningModule):
             plt.suptitle(f"Variation de la dimension {i + 1}")
             plt.show()
 
+    def demo(self, data, latent_dim):
+        imgs = []
+        k = 1
+        for i in range(10):
+            r = randint(0, len(data))
+            plt.subplot(10, 2, k)
+            k += 2
+            img = data[r][0]
+            imgs.append(img)
+            plt.imshow(img.detach().cpu().numpy().reshape(64,64), cmap='gray')
+            plt.axis('off')
+
+        k = 2
+        for img in imgs:
+            plt.subplot(10, 2, k)
+            k += 2
+            plt.imshow(self.model.generate(torch.reshape(img,(1,1,64,64))).detach().cpu().numpy().reshape(64,64), cmap='gray')
+            plt.axis('off')
+        plt.suptitle("Reconstruction")
+        plt.show()
+
+        latent_samples = torch.randn(20, latent_dim).to(self.curr_device)
+        for j in range(20):
+            generated_sample = self.model.decode(latent_samples[j])
+            plt.subplot(10, 2, j+1)
+            plt.imshow(generated_sample.detach().cpu().numpy().reshape(64,64), cmap='gray')
+            plt.axis('off')
+        plt.suptitle("Génération à partir de point random")
+        plt.show()
+
     def visualize_latent_space(self, valid_loader):
         points = []
         label_idcs = []
@@ -156,7 +165,8 @@ class VAEXperiment(pl.LightningModule):
             del img, label
         points = np.array(points)
         
-        point_embedded = TSNE(n_components=2, learning_rate='auto', init='random').fit_transform(points)
+        point_embedded = TSNE(n_components=2).fit_transform(points)
+        
         # Creating a scatter plot
         fig, ax = plt.subplots(figsize=(10, 10))
         scatter = ax.scatter(x=point_embedded[:, 0], y=point_embedded[:, 1], s=2.0, c=label_idcs, cmap='tab10', alpha=0.9, zorder=2)

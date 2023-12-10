@@ -59,11 +59,10 @@ if __name__ == "__main__":
              data.val_dataset_concat[7][0],
             ]
         #experiment.visualize_latent_space(data.test_dataloader())
-        #experiment.visualize_effect(config['model_params']["latent_dim"])
-        experiment.visualize_each_dim(d, config['model_params']["latent_dim"])
+        experiment.visualize_effect(config['model_params']["latent_dim"])
+        #experiment.visualize_each_dim(d, config['model_params']["latent_dim"])
         #experiment.sample_image()
-        #experiment.visualize_latent_space(data.test_dataloader())
-        #experiment.interpolate(config["model_params"]["latent_dim"])
+        #experiment.demo(data.val_dataset_concat, config['model_params']["latent_dim"])
     else:
         tb_logger =  TensorBoardLogger(save_dir=config['logging_params']['save_dir'],
                                     name=config['model_params']['name'],)
