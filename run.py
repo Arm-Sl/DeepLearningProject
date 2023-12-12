@@ -10,7 +10,6 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from lightning_lite.utilities.seed import seed_everything
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from dataset import VAEDataset
-import torch.utils.data as data_utils
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generic runner for VAE models')
@@ -47,6 +46,7 @@ if __name__ == "__main__":
         8: 61
         9: 7
         """
+
         d = [data.val_dataset_concat[3][0],
              data.val_dataset_concat[2][0],
              data.val_dataset_concat[1][0],
@@ -57,12 +57,15 @@ if __name__ == "__main__":
              data.val_dataset_concat[0][0],
              data.val_dataset_concat[61][0],
              data.val_dataset_concat[7][0],
-            ]
-        #experiment.visualize_latent_space(data.test_dataloader())
-        experiment.visualize_effect(config['model_params']["latent_dim"])
-        #experiment.visualize_each_dim(d, config['model_params']["latent_dim"])
-        #experiment.sample_image()
-        #experiment.demo(data.val_dataset_concat, config['model_params']["latent_dim"])
+        ]
+        
+        # Affichage d'un exemple de reconstruction et de génération aléatoire
+        experiment.demo(data.val_dataset_concat, config['model_params']["latent_dim"])
+        # Visualisation de l'espace latent
+        experiment.visualize_latent_space(data.test_dataloader())
+        experiment.visualize_each_dim_random(config['model_params']["latent_dim"])
+        experiment.visualize_each_dim_all_numbers(d, config['model_params']["latent_dim"])
+        experiment.check_rotation(d[1], config['model_params']["latent_dim"])
     else:
         tb_logger =  TensorBoardLogger(save_dir=config['logging_params']['save_dir'],
                                     name=config['model_params']['name'],)

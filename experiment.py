@@ -7,9 +7,10 @@ from models.types_ import *
 import pytorch_lightning as pl
 import torchvision.utils as vutils
 import matplotlib.pyplot as plt
-import torch.utils.data as data_utils
 from sklearn.manifold import TSNE
 from random import randint
+from torchvision import transforms
+
 
 class VAEXperiment(pl.LightningModule):
 
@@ -39,7 +40,6 @@ class VAEXperiment(pl.LightningModule):
                                               M_N = self.params['kld_weight'], #al_img.shape[0]/ self.num_train_imgs,
                                               optimizer_idx=optimizer_idx,
                                               batch_idx = batch_idx)
-
         self.log_dict({key: val.item() for key, val in train_loss.items()}, sync_dist=True)
 
         return train_loss['loss']
@@ -50,10 +50,10 @@ class VAEXperiment(pl.LightningModule):
 
         results = self.forward(real_img, labels = labels)
         val_loss = self.model.loss_function(*results,
-                                            M_N = self.params['kld_weight'], #real_img.shape[0]/ self.num_val_imgs,
+                                            M_N = 1, #real_img.shape[0]/ self.num_val_imgs,
                                             optimizer_idx = optimizer_idx,
                                             batch_idx = batch_idx)
-
+        
         self.log_dict({f"val_{key}": val.item() for key, val in val_loss.items()}, sync_dist=True)
 
         
@@ -70,7 +70,7 @@ class VAEXperiment(pl.LightningModule):
         plt.imshow(sample.detach().cpu().numpy().reshape(64,64), cmap='gray')
         plt.show()
 
-    def visualize_effect(self, latent_dim, num_samples=20):
+    def visualize_each_dim_random(self, latent_dim, num_samples=20):
         # Générer un échantillon aléatoire dans l'espace latent
         latent_sample = torch.randn(1, latent_dim).to(self.curr_device)
 
@@ -86,26 +86,30 @@ class VAEXperiment(pl.LightningModule):
                 plt.axis('off')
         plt.show()
 
-    def interpolate(self, latent_dim):
-        point1 = torch.randn(latent_dim).to(self.curr_device)
-        point2 = torch.randn(latent_dim).to(self.curr_device)
-        # Interpoler linéairement entre les deux points
-        interpolation_values = torch.linspace(0, 1, 20).to(self.curr_device)
-        interpolation_values = interpolation_values.view(-1, 1)
+    def check_rotation(self, img, latent_dim):
+        all_img = []
+        fig = plt.figure()
+        for i in range(90, 0, -5):
+            all_img.append(transforms.functional.rotate(img, i))
+        all_img.append(img)
+        for i in range(-5, -95, -5):
+            all_img.append(transforms.functional.rotate(img, i))
+        
+        angle = [i for i in range(-90, 95, 5)]
+        data = [[] for i in range(latent_dim)]
+        for img in all_img:
+            encode = self.model.encode(torch.reshape(img,(1,1,64,64)))[0][0]
+            for i in range(latent_dim):
+                data[i].append(encode[i].detach().numpy())
 
-        # Effectuer l'interpolation dans l'espace latent
-        interpolated_points = point1 + interpolation_values * (point2 - point1)
-        fig = plt.figure(figsize=(8, 8))
-        col = 5
-        row = 4
-        # Utiliser le décodeur pour générer des exemples interpolés
-        for i in range(1, col*row +1 ):
-            interpolated_sample = self.model.decode(interpolated_points[i-1])
-            fig.add_subplot(row, col, i)
-            plt.imshow(interpolated_sample.detach().cpu().numpy().reshape(28,28), cmap='gray')
-        plt.show()
-    
-    def visualize_each_dim(self, data, latent_dim):
+        for i, y in enumerate(data):
+            plt.plot(angle, y, label=f'Dimension {i+1}') 
+        plt.xlabel("Angle") 
+        plt.ylabel("Valeur") 
+        plt.legend(bbox_to_anchor=(.865, .5))
+        plt.show() 
+
+    def visualize_each_dim_all_numbers(self, data, latent_dim):
         encoded_data = []
         for img in data:
             encoded_data.append(self.model.encode(torch.reshape(img,(1,1,64,64)))[0])
