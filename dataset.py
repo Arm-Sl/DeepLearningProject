@@ -1,16 +1,8 @@
-import os
-import torch
-from torch import Tensor
-from pathlib import Path
-from typing import List, Optional, Sequence, Union, Any, Callable
-from torchvision.datasets.folder import default_loader
+from typing import List, Optional, Sequence, Union
 from pytorch_lightning import LightningDataModule
-from torch.utils.data import DataLoader, Dataset, ConcatDataset
+from torch.utils.data import DataLoader, ConcatDataset
 from torchvision import transforms
-from torchvision.datasets import CelebA, MNIST
-import zipfile
-import numpy as np
-import matplotlib.pyplot as plt
+from torchvision.datasets import MNIST
 
 
 class VAEDataset(LightningDataModule):
@@ -49,47 +41,49 @@ class VAEDataset(LightningDataModule):
 
     def setup(self, stage: Optional[str] = None) -> None:
 #       ========================ROT MNIST=======================================
-        train_transforms_rot = transforms.Compose([
-                                                transforms.RandomRotation(degrees=90),
-                                                transforms.Resize(self.patch_size),
-                                                transforms.ToTensor()])
-        
-        val_transforms_rot = transforms.Compose([
-                                                transforms.RandomRotation(degrees=90),
-                                                transforms.Resize(self.patch_size),
-                                                transforms.ToTensor()])
+        # DataSet d'entrainement MNIST
         train_transforms = transforms.Compose([
                                                 transforms.Resize(self.patch_size),
                                                 transforms.ToTensor()])
-        
-        val_transforms = transforms.Compose([
-                                            transforms.Resize(self.patch_size),
-                                            transforms.ToTensor()])
-        
         self.train_dataset = MNIST(
                 root="MNIST/raw/train-images-idx3-ubyte",
                 train=True,
                 download=True,
                 transform = train_transforms)
         
+        # DataSet de test MNIST
+        val_transforms = transforms.Compose([
+                                            transforms.Resize(self.patch_size),
+                                            transforms.ToTensor()])
         self.val_dataset = MNIST(
                 root="MNIST/raw/train-images-idx3-ubyte",
                 train=False,
                 download=True,
                 transform = val_transforms)
         
+        # DataSet d'entrainement MNIST avec une rotation aléatoire entre -90 et 90
+        train_transforms_rot = transforms.Compose([
+                                                transforms.RandomRotation(degrees=90),
+                                                transforms.Resize(self.patch_size),
+                                                transforms.ToTensor()])
         self.train_dataset_rot = MNIST(
                 root="MNIST/raw/train-images-idx3-ubyte",
                 train=True,
                 download=True,
                 transform = train_transforms_rot)
         
+        # DataSet de test MNIST avec une rotation aléatoire entre -90 et 90
+        val_transforms_rot = transforms.Compose([
+                                                transforms.RandomRotation(degrees=90),
+                                                transforms.Resize(self.patch_size),
+                                                transforms.ToTensor()])
         self.val_dataset_rot = MNIST(
                 root="MNIST/raw/train-images-idx3-ubyte",
                 train=False,
                 download=True,
                 transform = val_transforms_rot)
 
+        # Dataset concaténé entre MNIST et Rotated MNIST
         self.train_dataset_concat = ConcatDataset([self.train_dataset, self.train_dataset_rot])
         self.val_dataset_concat = ConcatDataset([self.val_dataset, self.val_dataset_rot])
 

@@ -26,6 +26,10 @@ $ python run.py -c configs/<config-file-name.yaml>
 **Config file template**
 
 ```yaml
+model:
+  load: false
+  path: "<path to the model save>"
+
 model_params:
   name: "<name of VAE model>"
   in_channels: 3

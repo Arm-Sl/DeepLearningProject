@@ -5,7 +5,7 @@ from torch.nn import functional as F
 from .types_ import *
 
 
-class BetaVAE(BaseVAE):
+class BetaVAEArticle(BaseVAE):
 
     num_iter = 0 # Global static variable to keep track of iterations
 
@@ -20,7 +20,7 @@ class BetaVAE(BaseVAE):
                  Capacity_max_iter: int = 1e5,
                  loss_type:str = 'B',
                  **kwargs) -> None:
-        super(BetaVAE, self).__init__()
+        super(BetaVAEArticle, self).__init__()
 
         self.latent_dim = latent_dim
         self.in_channels = in_channels
@@ -46,15 +46,15 @@ class BetaVAE(BaseVAE):
             in_channels = h_dim
 
         self.encoder = nn.Sequential(*modules)
-        self.fc = nn.Linear(hidden_dims[-1], 128)
-        self.fc_mu = nn.Linear(128, latent_dim)
-        self.fc_var = nn.Linear(128, latent_dim)
+        self.fc = nn.Linear(hidden_dims[-1]*16, 256)
+        self.fc_mu = nn.Linear(256, latent_dim)
+        self.fc_var = nn.Linear(256, latent_dim)
 
 
         # Build Decoder
         modules = []
-        self.decoder_fc = nn.Linear(128, hidden_dims[-1])
-        self.decoder_input = nn.Linear(latent_dim, 128)
+        self.decoder_fc = nn.Linear(256, hidden_dims[-1]*16)
+        self.decoder_input = nn.Linear(latent_dim, 256)
         hidden_dims.reverse()
 
         for i in range(len(hidden_dims) - 1):
@@ -84,7 +84,7 @@ class BetaVAE(BaseVAE):
                             nn.BatchNorm2d(hidden_dims[-1]),
                             nn.LeakyReLU(),
                             nn.Conv2d(hidden_dims[-1], out_channels= self.in_channels,
-                                      kernel_size= kernel_size, padding= 1, stride= 2),
+                                    kernel_size= kernel_size, padding= 1),
                             nn.Sigmoid())
 
     def encode(self, input: Tensor) -> List[Tensor]:
@@ -95,7 +95,6 @@ class BetaVAE(BaseVAE):
         :return: (Tensor) List of latent codes
         """
         result = self.encoder(input)
-        self.shape = result.shape
         result = torch.flatten(result, start_dim=1)
         result = self.fc(result)
         # Split the result into mu and var components
@@ -108,7 +107,7 @@ class BetaVAE(BaseVAE):
     def decode(self, z: Tensor) -> Tensor:
         result = self.decoder_input(z)
         result = self.decoder_fc(result)
-        result = result.view(-1, 256, 1, 1)
+        result = result.view(-1, 64, 4, 4)
         result = self.decoder(result)
         result = self.final_layer(result)
         return result

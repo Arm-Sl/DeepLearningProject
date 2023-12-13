@@ -1,7 +1,6 @@
 import os
 import yaml
 import argparse
-import numpy as np
 from pathlib import Path
 from models import *
 from experiment import VAEXperiment
@@ -12,6 +11,7 @@ from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from dataset import VAEDataset
 
 if __name__ == "__main__":
+    # Parse le fichier .yaml pour récupérer les paramètres
     parser = argparse.ArgumentParser(description='Generic runner for VAE models')
     parser.add_argument('--config',  '-c',
                         dest="filename",
@@ -26,47 +26,41 @@ if __name__ == "__main__":
         except yaml.YAMLError as exc:
             print(exc)
 
+    # Charge un modele pour l'étudier
     if config["model"]["load"]:
         print(f"======= Loading {config['model_params']['name']} =======")
+        # Chargement du  modèle
         model = vae_models[config['model_params']['name']](**config['model_params'])
         model.load_state_dict(torch.load(os.path.join(config["model"]["path"], "state_dict_model.pt")))
         model.eval()
         experiment = VAEXperiment(model,config['exp_params'])
         data = VAEDataset(**config["data_params"])
         data.setup()
-        """
-        0: 3
-        1: 2
-        2: 1
-        3: 18
-        4: 4
-        5: 8
-        6: 11
-        7: 0
-        8: 61
-        9: 7
-        """
-
-        d = [data.val_dataset_concat[3][0],
-             data.val_dataset_concat[2][0],
-             data.val_dataset_concat[1][0],
-             data.val_dataset_concat[18][0],
-             data.val_dataset_concat[4][0],
-             data.val_dataset_concat[8][0],
-             data.val_dataset_concat[11][0],
-             data.val_dataset_concat[0][0],
-             data.val_dataset_concat[61][0],
-             data.val_dataset_concat[7][0],
+        # Tout les chiffres de 0 à 9
+        d = [data.val_dataset_concat[3][0], # 0
+             data.val_dataset_concat[2][0], # 1
+             data.val_dataset_concat[1][0], # 2
+             data.val_dataset_concat[18][0],# 3
+             data.val_dataset_concat[4][0], # 4
+             data.val_dataset_concat[8][0], # 5
+             data.val_dataset_concat[11][0],# 6
+             data.val_dataset_concat[0][0], # 7
+             data.val_dataset_concat[61][0],# 8
+             data.val_dataset_concat[7][0], # 9
         ]
         
         # Affichage d'un exemple de reconstruction et de génération aléatoire
-        experiment.demo(data.val_dataset_concat, config['model_params']["latent_dim"])
+        experiment.recons_and_gen(data.val_dataset_concat, config['model_params']["latent_dim"])
         # Visualisation de l'espace latent
         experiment.visualize_latent_space(data.test_dataloader())
+        # Visualisation de l'effet de chaque dimension sur un point aléatoire dans espace latent
         experiment.visualize_each_dim_random(config['model_params']["latent_dim"])
+        # Visualisation de l'effet de chaque dimension sur chaque chiffre
         experiment.visualize_each_dim_all_numbers(d, config['model_params']["latent_dim"])
-        experiment.check_rotation(d[1], config['model_params']["latent_dim"])
+        # Visualisation des valeurs de chaque dimensions de l'espace latent de l'encodage d'une image en fonction de l'angle de rotation
+        experiment.visualize_each_dim_with_angle(d[1], config['model_params']["latent_dim"])
     else:
+        # Entraine un nouveau modele
         tb_logger =  TensorBoardLogger(save_dir=config['logging_params']['save_dir'],
                                     name=config['model_params']['name'],)
 
@@ -77,8 +71,7 @@ if __name__ == "__main__":
         experiment = VAEXperiment(model,
                                 config['exp_params'])
 
-        data = VAEDataset(**config["data_params"])#, pin_memory=len(config['trainer_params']['gpus']) != 0)
-
+        data = VAEDataset(**config["data_params"])
         data.setup()
         runner = Trainer(logger=tb_logger,
                         callbacks=[
@@ -88,7 +81,6 @@ if __name__ == "__main__":
                                             monitor= "val_loss",
                                             save_last= True),
                         ],
-                        #strategy=DDPStrategy(find_unused_parameters=False),
                         **config['trainer_params'])
 
 

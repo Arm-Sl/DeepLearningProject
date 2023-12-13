@@ -81,27 +81,31 @@ class VAEXperiment(pl.LightningModule):
             for j in range(num_samples):
                 latent_copy[0, i] = values[j]
                 generated_sample = self.model.decode(latent_copy)
-                plt.subplot(10, num_samples, (i*num_samples) + j + 1)
+                plt.subplot(latent_dim, num_samples, (i*num_samples) + j + 1)
                 plt.imshow(generated_sample.detach().cpu().numpy().reshape(64,64), cmap='gray')
                 plt.axis('off')
         plt.show()
 
-    def check_rotation(self, img, latent_dim):
+    def visualize_each_dim_with_angle(self, img, latent_dim):
         all_img = []
         fig = plt.figure()
+        # Rotation de 90 à -90 tout les 5 degrès de la même image
         for i in range(90, 0, -5):
             all_img.append(transforms.functional.rotate(img, i))
         all_img.append(img)
         for i in range(-5, -95, -5):
             all_img.append(transforms.functional.rotate(img, i))
         
+
         angle = [i for i in range(-90, 95, 5)]
         data = [[] for i in range(latent_dim)]
+        # Encodage de chaque image par le modèle
         for img in all_img:
             encode = self.model.encode(torch.reshape(img,(1,1,64,64)))[0][0]
             for i in range(latent_dim):
                 data[i].append(encode[i].detach().numpy())
 
+        # Création du plot pour observer les valeurs de chaque dimension en fonction de l'angle de rotation
         for i, y in enumerate(data):
             plt.plot(angle, y, label=f'Dimension {i+1}') 
         plt.xlabel("Angle") 
@@ -127,9 +131,10 @@ class VAEXperiment(pl.LightningModule):
             plt.suptitle(f"Variation de la dimension {i + 1}")
             plt.show()
 
-    def demo(self, data, latent_dim):
+    def recons_and_gen(self, data, latent_dim):
         imgs = []
         k = 1
+        # Récupération d'image aléatoire dans le dataset
         for i in range(10):
             r = randint(0, len(data))
             plt.subplot(10, 2, k)
@@ -138,7 +143,7 @@ class VAEXperiment(pl.LightningModule):
             imgs.append(img)
             plt.imshow(img.detach().cpu().numpy().reshape(64,64), cmap='gray')
             plt.axis('off')
-
+        # Encodage de ces images par le modèle
         k = 2
         for img in imgs:
             plt.subplot(10, 2, k)
@@ -148,6 +153,7 @@ class VAEXperiment(pl.LightningModule):
         plt.suptitle("Reconstruction")
         plt.show()
 
+        # Génération de 20 images par le modèle avec des points aléatoire de l'espace latent
         latent_samples = torch.randn(20, latent_dim).to(self.curr_device)
         for j in range(20):
             generated_sample = self.model.decode(latent_samples[j])
@@ -157,10 +163,11 @@ class VAEXperiment(pl.LightningModule):
         plt.suptitle("Génération à partir de point random")
         plt.show()
 
+
     def visualize_latent_space(self, valid_loader):
         points = []
         label_idcs = []
-    
+        # Encodage du dataset par le modèle
         for i, data in enumerate(valid_loader):
             img, label = [d.to(self.curr_device) for d in data]
             proj = self.model.encode(img)
@@ -168,10 +175,10 @@ class VAEXperiment(pl.LightningModule):
             label_idcs.extend(label.detach().cpu().numpy())
             del img, label
         points = np.array(points)
-        
+        # Réduction de dimensions pour afficher par la suite
         point_embedded = TSNE(n_components=2).fit_transform(points)
         
-        # Creating a scatter plot
+        # Création du plot
         fig, ax = plt.subplots(figsize=(10, 10))
         scatter = ax.scatter(x=point_embedded[:, 0], y=point_embedded[:, 1], s=2.0, c=label_idcs, cmap='tab10', alpha=0.9, zorder=2)
         classes = np.unique(label_idcs)
