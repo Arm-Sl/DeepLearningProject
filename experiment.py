@@ -86,33 +86,6 @@ class VAEXperiment(pl.LightningModule):
                 plt.axis('off')
         plt.show()
 
-    def visualize_each_dim_with_angle(self, img, latent_dim):
-        all_img = []
-        fig = plt.figure()
-        # Rotation de 90 à -90 tout les 5 degrès de la même image
-        for i in range(90, 0, -5):
-            all_img.append(transforms.functional.rotate(img, i))
-        all_img.append(img)
-        for i in range(-5, -95, -5):
-            all_img.append(transforms.functional.rotate(img, i))
-        
-
-        angle = [i for i in range(-90, 95, 5)]
-        data = [[] for i in range(latent_dim)]
-        # Encodage de chaque image par le modèle
-        for img in all_img:
-            encode = self.model.encode(torch.reshape(img,(1,1,64,64)))[0][0]
-            for i in range(latent_dim):
-                data[i].append(encode[i].detach().numpy())
-
-        # Création du plot pour observer les valeurs de chaque dimension en fonction de l'angle de rotation
-        for i, y in enumerate(data):
-            plt.plot(angle, y, label=f'Dimension {i+1}') 
-        plt.xlabel("Angle") 
-        plt.ylabel("Valeur") 
-        plt.legend(bbox_to_anchor=(.865, .5))
-        plt.show() 
-
     def visualize_each_dim_all_numbers(self, data, latent_dim):
         encoded_data = []
         for img in data:
