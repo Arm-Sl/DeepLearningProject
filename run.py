@@ -50,13 +50,13 @@ if __name__ == "__main__":
         ]
         
         # Affichage d'un exemple de reconstruction et de génération aléatoire
-        #experiment.recons_and_gen(data.val_dataset_concat, config['model_params']["latent_dim"])
+        experiment.recons_and_gen(data.val_dataset_concat, config['model_params']["latent_dim"])
         # Visualisation de l'espace latent
-        #experiment.visualize_latent_space(data.test_dataloader())
+        experiment.visualize_latent_space(data.test_dataloader())
         # Visualisation de l'effet de chaque dimension sur un point aléatoire dans espace latent
         experiment.visualize_each_dim_random(config['model_params']["latent_dim"])
         # Visualisation de l'effet de chaque dimension sur chaque chiffre
-        #experiment.visualize_each_dim_all_numbers(d, config['model_params']["latent_dim"])
+        experiment.visualize_each_dim_all_numbers(d, config['model_params']["latent_dim"])
     else:
         # Entraine un nouveau modele
         tb_logger =  TensorBoardLogger(save_dir=config['logging_params']['save_dir'],
