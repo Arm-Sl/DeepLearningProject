@@ -1,5 +1,8 @@
+
+# BetaVAE config file
+
 model:
-  load: false
+  load: false  #Charger un modèle pré-entrainé pour obtenir des resulats et des images reconstruites (mode demo)
   path: "logs/BetaVAE/version_3/Model"
 
 model_params:

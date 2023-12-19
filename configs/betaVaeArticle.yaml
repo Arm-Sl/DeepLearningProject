@@ -1,5 +1,7 @@
+# Configuration file for the BetaVAE model de l'article
+
 model:
-  load: true
+  load: true #Charger un modèle pré-entrainé pour obtenir des resulats et des images reconstruites (mode demo)
   path: "logs/BetaVAEArticle/version_0/Model"
 
 model_params:

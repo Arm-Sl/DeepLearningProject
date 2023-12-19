@@ -4,7 +4,7 @@ from torch import nn
 from torch.nn import functional as F
 from .types_ import *
 
-
+#Notre Beta Vae
 class BetaVAE(BaseVAE):
 
     num_iter = 0 # Global static variable to keep track of iterations

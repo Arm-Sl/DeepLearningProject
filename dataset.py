@@ -39,6 +39,7 @@ class VAEDataset(LightningDataModule):
         self.num_workers = num_workers
         self.pin_memory = pin_memory
 
+    # SETUP DATASET MINST AVEC ROTATION
     def setup(self, stage: Optional[str] = None) -> None:
 #       ========================ROT MNIST=======================================
         # DataSet d'entrainement MNIST

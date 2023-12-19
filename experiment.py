@@ -69,7 +69,8 @@ class VAEXperiment(pl.LightningModule):
         sample = self.model.sample(1, self.curr_device)
         plt.imshow(sample.detach().cpu().numpy().reshape(64,64), cmap='gray')
         plt.show()
-
+        
+    # Visualisation de l'effet de chaque dimension sur un point aléatoire dans espace latent
     def visualize_each_dim_random(self, latent_dim, num_samples=20):
         # Générer un échantillon aléatoire dans l'espace latent
         latent_sample = torch.randn(1, latent_dim).to(self.curr_device)
@@ -86,6 +87,7 @@ class VAEXperiment(pl.LightningModule):
                 plt.axis('off')
         plt.show()
 
+    # Visualisation de l'effet de chaque dimension sur chaque chiffre
     def visualize_each_dim_all_numbers(self, data, latent_dim):
         encoded_data = []
         for img in data:
@@ -104,6 +106,7 @@ class VAEXperiment(pl.LightningModule):
             plt.suptitle(f"Variation de la dimension {i + 1}")
             plt.show()
 
+    # Affichage d'un exemple de reconstruction et de génération aléatoire
     def recons_and_gen(self, data, latent_dim):
         imgs = []
         k = 1
@@ -136,7 +139,7 @@ class VAEXperiment(pl.LightningModule):
         plt.suptitle("Génération à partir de point random")
         plt.show()
 
-
+    #voir l'espace latent
     def visualize_latent_space(self, valid_loader):
         points = []
         label_idcs = []
@@ -161,6 +164,7 @@ class VAEXperiment(pl.LightningModule):
         ax.grid(True, color="lightgray", alpha=1.0, zorder=0)
         plt.show()
 
+    
     def sample_images(self):
         # Get sample reconstruction image            
         test_input, test_label = next(iter(self.trainer.datamodule.test_dataloader()))

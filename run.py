@@ -26,7 +26,7 @@ if __name__ == "__main__":
         except yaml.YAMLError as exc:
             print(exc)
 
-    # Charge un modele pour l'étudier
+    # Charge un modele pour l'étudier (ajout)
     if config["model"]["load"]:
         print(f"======= Loading {config['model_params']['name']} =======")
         # Chargement du  modèle

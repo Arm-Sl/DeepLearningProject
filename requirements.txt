@@ -5,3 +5,5 @@ tensorboard>=2.2.0
 torchsummary==1.5.1
 
 matplotlib>=3.6.3
+
+#mit a jour des librairies
